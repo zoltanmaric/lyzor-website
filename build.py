@@ -65,7 +65,7 @@ def clean_html(soup):
     # 1. Remove Framer comments (<!-- Made in Framer ... -->, <!-- Published ... -->)
     for comment in soup.find_all(string=lambda t: isinstance(t, Comment)):
         text = comment.strip()
-        if text.startswith("Made in Framer") or text.startswith("Published "):
+        if text.startswith("Made in Framer"):
             comment.extract()
 
     # 2. Remove Framer editor preload script

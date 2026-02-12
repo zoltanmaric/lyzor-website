@@ -6,6 +6,7 @@ and outputs deployment-ready HTML to site/.
 Usage: python build.py
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -46,6 +47,19 @@ def download_pages():
     return pages
 
 
+def remove_badge_css(css):
+    """Strip #__framer-badge-container rules from CSS text, including @supports wrappers."""
+    css = re.sub(
+        r'@supports\s*\([^)]*\)\s*\{\s*#__framer-badge-container\s*\{[^}]*\}\s*\}',
+        '', css, flags=re.DOTALL
+    )
+    css = re.sub(
+        r'#__framer-badge-container\s*\{[^}]*\}',
+        '', css, flags=re.DOTALL
+    )
+    return css
+
+
 def clean_html(soup):
     """Remove Framer branding and editor artifacts from the parsed HTML."""
     # 1. Remove Framer comments (<!-- Made in Framer ... -->, <!-- Published ... -->)
@@ -67,12 +81,23 @@ def clean_html(soup):
         elif meta.get("name") == "generator" and "Framer" in (meta.get("content") or ""):
             meta.decompose()
 
-    # 4. Remove #__framer-badge-container from CSS
+    # 4. Remove Framer badge — the container element, CSS rules, and import map entry
+    badge = soup.find(id="__framer-badge-container")
+    if badge:
+        badge.decompose()
+
     for style in soup.find_all("style"):
         if style.string and "__framer-badge-container" in style.string:
-            style.string = re.sub(
-                r'#__framer-badge-container\{[^}]*\}', '', style.string
-            )
+            style.string = remove_badge_css(style.string)
+
+    for script in soup.find_all("script", attrs={"type": "importmap"}):
+        if script.string and "__framer-badge" in script.string:
+            try:
+                importmap = json.loads(script.string)
+                importmap.get("imports", {}).pop("__framer-badge", None)
+                script.string = json.dumps(importmap, separators=(",", ":"))
+            except json.JSONDecodeError:
+                pass
 
     return soup
 

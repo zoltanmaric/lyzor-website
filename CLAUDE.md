@@ -26,12 +26,13 @@ See `.claude/skills/framer-mcp.md` for full MCP capabilities, available tools, a
 
 **Important:** Make multiple small `updateXmlForNode` calls rather than one large batch — changes appear in real-time in the Framer canvas.
 
-### Static Export (read-only reference)
+### Static Export & Deployment
 
-A static HTML export exists in `raw_site_export/` for reference/preview only. The HTML is machine-generated and minified — always prefer editing via Framer MCP.
+`raw_site_export/` contains HTML pages downloaded from the Framer-published site. Assets (images, CSS, JS, fonts) are referenced via Framer's CDN — not stored locally.
 
-- Preview: open `raw_site_export/index.html` in a browser
-- Assets: `raw_site_export/index_files/` (images in `.avif`/`.webp`, videos in `.mp4`, SVGs, CSS)
+The site is hosted via **Cloudflare Pages**. To deploy, upload the contents of `raw_site_export/` as a new deployment.
+
+To refresh the export after making changes in Framer, run `./raw_site_export.sh`.
 
 ## Site Structure
 

@@ -140,7 +140,7 @@ def build():
         css_written = True
 
         out_path = SITE_DIR / filename
-        out_path.write_text(str(soup), encoding="utf-8")
+        out_path.write_text(soup.prettify(), encoding="utf-8")
 
     print(f"Done. Output in {SITE_DIR}/")
 

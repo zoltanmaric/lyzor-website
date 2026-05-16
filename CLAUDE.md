@@ -24,7 +24,7 @@ outputs deployment-ready files to `site/`.
 The MCP plugin must be open in the user's Framer project for the connection to work. If you get
 "Upstream not connected", ask the user to open Framer → Cmd-K → search "MCP" → open the plugin.
 
-See `.claude/skills/framer-mcp.md` for full MCP capabilities, available tools, and usage patterns.
+See `.claude/skills/framer-mcp/SKILL.md` for full MCP capabilities, available tools, and usage patterns.
 
 **Common workflows:**
 1. **Explore:** `getProjectXml` → `getNodeXml(pageId)` → `getNodeXml(componentId)` for internals

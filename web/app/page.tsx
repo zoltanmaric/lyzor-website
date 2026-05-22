@@ -1,3 +1,5 @@
+import { FlyingObjects } from "./FlyingObjects";
+
 const HERO_VIDEO_SRC =
   "https://framerusercontent.com/assets/9f3YOJWd8t3cibP1iqPDR1mCMro.mp4";
 const HERO_POSTER_SRC =
@@ -69,7 +71,8 @@ export default function Home() {
         </nav>
       </header>
 
-      <main>
+      <main className="relative">
+        <FlyingObjects />
         <section className="flex min-h-screen items-center justify-center px-6">
           <div className="w-full text-center">
             <h1 className="text-heading-hero">

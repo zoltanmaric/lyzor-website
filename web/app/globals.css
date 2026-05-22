@@ -38,7 +38,11 @@ body {
     background-image: linear-gradient(123deg, #0dcfff 11.18%, #545c9e 45%);
   }
 
-  /* Text presets, mirrored from the Framer design system */
+  /* Text presets, mirrored from the Framer design system.
+     These classes are visual-only — they do not imply a heading level. Pick the semantic
+     tag (h1, h2, h3, p, ...) based on document structure, not on which preset you're
+     applying. Framer's source skips h2 entirely (h1 → h3 → h6); the rebuild should not
+     copy that. See .claude/skills/port-section/SKILL.md for the full rationale. */
   .text-menu-logo {
     font-size: 38px;
     font-weight: 800;

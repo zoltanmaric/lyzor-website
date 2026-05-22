@@ -9,6 +9,17 @@
   --color-body-text: #465478;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   background: rgb(249, 250, 251);
   color: rgb(0, 0, 0);

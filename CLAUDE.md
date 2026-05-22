@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Persistent knowledge
+
+**No memory writing.** Do not write to the user-level memory directory
+(`~/.claude/projects/.../memory/`). Record durable knowledge in in-repo agent instructions:
+
+- Hard rules and workflow guidance → `CLAUDE.md` / `AGENTS.md` (root or per-subdir, like `web/AGENTS.md`)
+- Design decisions and divergences from references → `web/DESIGN_NOTES.md`
+- Reusable workflows → `.claude/skills/<name>/SKILL.md`
+- Project context only relevant to one subtree → `<subtree>/AGENTS.md` or `<subtree>/CLAUDE.md`
+
+If you find existing memory entries, migrate their content into the appropriate in-repo file and
+remove the memory file in the same change.
+
+## Git
+
+- Never use `git add -f`, `git add .`, or `git add -A`. Stage files by explicit path.
+- One kind of change per commit. Do not mix unrelated changes.
+
 ## Code Style
 
 - Limit line lengths to 120 characters, including in markdown files.

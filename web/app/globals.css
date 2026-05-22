@@ -10,14 +10,10 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Smooth scroll is driven by JS in NavPill — CSS scroll-behavior is unreliable
+     across browsers and user settings. Keep scroll-padding so scrollIntoView lands
+     below the fixed nav pill. */
   scroll-padding-top: 100px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
 }
 
 body {
@@ -27,6 +23,16 @@ body {
 }
 
 @layer components {
+  /* Nav-pill dots: 3x3 grid at rest, morph toward a circular arrangement on parent
+     button :hover. Each dot's hover translation is set as a CSS variable inline. */
+  .nav-dot {
+    transition: transform 250ms ease-out;
+  }
+  button:hover .nav-dot,
+  button:focus-visible .nav-dot {
+    transform: translate(var(--nav-dot-tx, 0px), var(--nav-dot-ty, 0px));
+  }
+
   /* Brand gradient applied to text via background-clip. inline-block + padding extends
      the background box so descenders (y, p, g) are filled by the gradient instead of
      clipping to transparent. max-width keeps the box wrapping inside narrow parents. */

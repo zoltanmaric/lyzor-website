@@ -19,14 +19,23 @@ body {
   /* Brand gradient applied to text via background-clip. inline-block + padding extends
      the background box so descenders (y, p, g) are filled by the gradient instead of
      clipping to transparent. max-width keeps the box wrapping inside narrow parents. */
-  .gradient-brand {
-    background-image: linear-gradient(108deg, #80e5ff 8%, #7584d6 49%);
+  .gradient-brand,
+  .gradient-section {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     display: inline-block;
     max-width: 100%;
     padding-bottom: 0.15em;
+  }
+
+  .gradient-brand {
+    background-image: linear-gradient(108deg, #80e5ff 8%, #7584d6 49%);
+  }
+
+  /* Section-title gradient: brighter cyan → muted deep purple-blue. */
+  .gradient-section {
+    background-image: linear-gradient(123deg, #0dcfff 11.18%, #545c9e 45%);
   }
 
   /* Text presets, mirrored from the Framer design system */
@@ -45,6 +54,20 @@ body {
     font-weight: 500;
     letter-spacing: -0.05em;
     line-height: 1em;
+  }
+
+  .text-section-title {
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1.1em;
+  }
+
+  .text-body-l {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.4em;
   }
 
   .text-body-s {

@@ -69,15 +69,49 @@ export default function Home() {
         </nav>
       </header>
 
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <div className="w-full text-center">
-          <h1 className="text-heading-hero">
-            <span className="gradient-brand">Lyzor Therapeutics</span>
-          </h1>
-          <p className="text-body-s text-body-text mt-6">
-            AI-guided bacteriophage matching
-          </p>
-        </div>
+      <main>
+        <section className="flex min-h-screen items-center justify-center px-6">
+          <div className="w-full text-center">
+            <h1 className="text-heading-hero">
+              <span className="gradient-brand">Lyzor Therapeutics</span>
+            </h1>
+            <p className="text-body-s text-body-text mt-6">
+              AI-guided bacteriophage matching
+            </p>
+          </div>
+        </section>
+
+        <section
+          id="story"
+          className="flex flex-col items-center px-5 py-15"
+        >
+          <div className="flex w-full max-w-3xl flex-col gap-8 pt-10">
+            <h3 className="text-section-title">
+              <span className="gradient-section">The Story of Us</span>
+            </h3>
+            <div className="text-body-text flex flex-col gap-8 pb-5">
+              <p className="text-body-l">
+                Phage therapy has a bottleneck: matching.
+              </p>
+              <p className="text-body-l">
+                Finding a phage that works against a specific bacterial isolate
+                still relies on slow, brute-force wet-lab screening. Labs may
+                need to test many candidates over several days before finding a
+                useful hit.
+              </p>
+              <p className="text-body-l">
+                We built a prediction model for E. coli phage-host matching to
+                help labs prioritize the most promising phages before screening
+                begins.
+              </p>
+              <p className="text-body-l">
+                Our goal is to make isolate-specific phage matching faster,
+                cheaper, and scalable, especially for multidrug-resistant E.
+                coli, where time matters.
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
     </>
   );

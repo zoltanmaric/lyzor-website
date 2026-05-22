@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --color-brand-purple: #7584d6;
+  --color-brand-cyan: #80e5ff;
+  --color-brand-deep: #4254a6;
+  --color-brand-lavender: #a6a5fa;
+  --color-body-text: #465478;
+}
+
+body {
+  background: rgb(249, 250, 251);
+  color: rgb(0, 0, 0);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+@layer components {
+  /* Brand gradient applied to text via background-clip. inline-block + padding extends
+     the background box so descenders (y, p, g) are filled by the gradient instead of
+     clipping to transparent. max-width keeps the box wrapping inside narrow parents. */
+  .gradient-brand {
+    background-image: linear-gradient(108deg, #80e5ff 8%, #7584d6 49%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    max-width: 100%;
+    padding-bottom: 0.15em;
+  }
+
+  /* Text presets, mirrored from the Framer design system */
+  .text-menu-logo {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 0.9em;
+    white-space: nowrap;
+  }
+
+  /* Hero uses clamp on mobile so very narrow viewports don't overflow with "Therapeutics".
+     Clamp lerps between 1.5rem (24px) at ~200px width and 3rem (48px) at ~400px+. */
+  .text-heading-hero {
+    font-size: clamp(1.5rem, 12vw, 3rem);
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 1em;
+  }
+
+  .text-body-s {
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.4em;
+  }
+
+  @media (min-width: 1200px) {
+    .text-menu-logo {
+      font-size: 45px;
+    }
+    .text-heading-hero {
+      font-size: 7rem;
+    }
+    .text-body-s {
+      font-size: 20px;
+    }
+  }
+}

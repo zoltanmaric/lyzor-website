@@ -153,3 +153,8 @@ the same viewport. If anything's still off, go back to step 2 — don't guess.
   inline span, not the heading. If descenders still clip at very tight line-heights, give the
   gradient class `display: inline-block; padding-bottom: 0.15em` so the background box extends
   past the baseline.
+- **Don't copy Framer's heading tags.** Framer ties text styles to heading tags rather than to a
+  document outline, so its hierarchy skips levels (the live site uses only `h1` / `h3` / `h6` —
+  no `h2` at all). In the rebuild, pick semantic tags based on document structure (`h2` for
+  top-level sections after the hero, `h3` for subsections, etc.) and apply the visual style via
+  the CSS class. The visual is identical, the outline is cleaner.

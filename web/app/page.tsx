@@ -86,9 +86,9 @@ export default function Home() {
           className="flex flex-col items-center px-5 py-15"
         >
           <div className="flex w-full max-w-3xl flex-col gap-8 pt-10">
-            <h3 className="text-section-title">
+            <h2 className="text-section-title">
               <span className="gradient-section">The Story of Us</span>
-            </h3>
+            </h2>
             <div className="text-body-text flex flex-col gap-8 pb-5">
               <p className="text-body-l">
                 Phage therapy has a bottleneck: matching.

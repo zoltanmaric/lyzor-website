@@ -21,3 +21,30 @@ captured in a build manifest (`package.json` + lockfile) that lives in this dire
 When you violate this (or notice a violation), fix it in the same turn — pin the version, update the
 manifest, regenerate the lockfile. Do not leave the repo in a state where "it worked on my machine"
 is the only proof.
+
+## CSS gotchas (Tailwind 4 + Next.js dev server)
+
+### Cascade layers vs. selector specificity
+
+Tailwind 4 puts its utilities in `@layer utilities`. **CSS Cascade Layers override selector
+specificity** — a rule in `@layer utilities` beats a more-specific rule in `@layer components`
+regardless of the selector. If you write a component-layer rule like `button:hover .my-class
+{ width: 26px }` and an element has the Tailwind utility `size-[19px]`, the utility wins, the
+hover rule is ignored, and the animation silently doesn't happen.
+
+**Fix:** declare rules that must beat utilities **outside any `@layer` block** (unlayered styles
+win over all layered styles). Reserve `@layer components` for visual presets that don't need to
+override utilities (text presets, gradient classes, etc.).
+
+### CSS edits not reflecting in the browser
+
+When you change `globals.css` and the browser still shows old styles:
+
+1. First check the **served** CSS, not just the source on disk:
+   `curl -s http://localhost:3000/ | grep -oE 'href="[^"]*\.css[^"]*"'` to find the URL, then
+   `curl` it and grep for your selector.
+2. If the served CSS still has the old rule, the dev server's compiled cache is stale. **Restart
+   the dev server fully** (kill the process, then `npm run dev`). A page reload in the browser
+   alone is not enough — the bundler keeps the old compiled chunk.
+
+Don't keep debugging logic that's correct on disk. The bug is in the pipeline, not the rule.

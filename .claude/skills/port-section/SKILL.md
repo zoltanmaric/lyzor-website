@@ -52,6 +52,21 @@ read at least: `font-family`, `font-size`, `font-weight`, `letter-spacing`, `lin
 `color`, `background-image`, plus any layout values you suspect (padding, border-radius,
 box-shadow).
 
+**For interaction states (hover, focus, open, active):** Framer drives state variants via
+class toggles like `.hover`, `.framer-v-<id>`, etc. To measure a state without actually being
+in it, toggle the relevant class on via JS and read positions; then toggle it off. Example:
+
+```js
+const btn = document.querySelector('[data-framer-name="Menu Icon"] button');
+btn.classList.add('hover');
+const positions = [...btn.querySelectorAll('.framer-dot')].map(d => d.getBoundingClientRect());
+btn.classList.remove('hover');
+```
+
+`getBoundingClientRect` returns the live computed position — after the cascade, after any
+runtime JS transforms, after any `@keyframes`. It's the source of truth in a way static CSS
+extraction can't be.
+
 ```js
 (() => {
   const pick = (el, props) => {
@@ -158,3 +173,17 @@ the same viewport. If anything's still off, go back to step 2 — don't guess.
   no `h2` at all). In the rebuild, pick semantic tags based on document structure (`h2` for
   top-level sections after the hero, `h3` for subsections, etc.) and apply the visual style via
   the CSS class. The visual is identical, the outline is cleaner.
+- **Static CSS analysis lies. Measure the live DOM.** Reading `site/css/styles.css` and computing
+  deltas mathematically (e.g., "the container grows 24→34, edges follow 50%, so deltas are X")
+  routinely misses rules that grep didn't return, JS-applied transforms, or runtime variants. The
+  reliable path is always: toggle the state class, read `getBoundingClientRect` on every relevant
+  element, log the deltas. Inferring from a subset and extrapolating produced two wrong fixes in
+  a row on the nav-pill hover dots before measuring the live DOM gave the actual numbers in one
+  query.
+- **When the user pushes back on the visual, trust their eye over your math.** If you derived a
+  pattern from static CSS that the user says doesn't match what they see, your derivation is
+  almost certainly wrong (missed rule, JS override, or wrong interpretation). Measure live before
+  defending the math.
+- **Measure every relevant element, not just a representative one.** If only TL and BR have
+  visible CSS overrides, do not assume TR and BL have no override — they might be overridden in
+  a rule grep missed, or by runtime JS. Read all 9 dots, not just 2.

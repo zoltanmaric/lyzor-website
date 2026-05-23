@@ -22,17 +22,19 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
-@layer components {
-  /* Nav-pill dots: 3x3 grid at rest, morph toward a circular arrangement on parent
-     button :hover. Each dot's hover translation is set as a CSS variable inline. */
-  .nav-dot {
-    transition: transform 250ms ease-out;
-  }
-  button:hover .nav-dot,
-  button:focus-visible .nav-dot {
-    transform: translate(var(--nav-dot-tx, 0px), var(--nav-dot-ty, 0px));
-  }
+/* Nav-pill dots: each dot has its own (--nav-dot-tx, --nav-dot-ty) hover translation
+   set inline (measured from the live Framer site), so on parent button :hover the
+   cluster expands around the stationary center dot. Declared outside @layer
+   components so it wins over @layer utilities. See NavPill.tsx for the deltas. */
+.nav-dot {
+  transition: transform 200ms ease-out;
+}
+button:hover .nav-dot,
+button:focus-visible .nav-dot {
+  transform: translate(var(--nav-dot-tx, 0px), var(--nav-dot-ty, 0px));
+}
 
+@layer components {
   /* Brand gradient applied to text via background-clip. inline-block + padding extends
      the background box so descenders (y, p, g) are filled by the gradient instead of
      clipping to transparent. max-width keeps the box wrapping inside narrow parents. */

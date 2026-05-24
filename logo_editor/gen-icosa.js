@@ -13,7 +13,7 @@ const CONFIG = {
   apexUp: true,
   light: [-0.6, 0.31, 0.65],
   rim: [0.38, 0.05, -0.45],
-  ambient: 0.38,
+  ambient: 0,
   rimStrength: 0.25,
   // 0 → flat (each face a single colour at its averaged intensity),
   // 1 → full Gouraud-style gradient between brightest and darkest vertex.

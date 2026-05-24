@@ -54,12 +54,6 @@ function readLayout() {
   };
 }
 
-// The light variant uses the same icosa as the dark variant but with ambient
-// pinned to zero — the unlit faces darken to the palette floor, giving the
-// figure enough contrast against a light background without needing a
-// separate color or brightness control.
-const LIGHT_VARIANT_AMBIENT = 0;
-
 function render() {
   const opts = readOpts();
   const layout = readLayout();
@@ -67,7 +61,7 @@ function render() {
   for (const k of Object.keys(layoutLabels)) layoutLabels[k].textContent = String(+layoutInputs[k].value);
   const icosa = buildSvg(opts, "t");
   const logoDark = buildLogoSvg(opts, layout, darkTextColorEl.value, "logo-d");
-  const logoLight = buildLogoSvg({ ...opts, ambient: LIGHT_VARIANT_AMBIENT }, layout, lightTextColorEl.value, "logo-l");
+  const logoLight = buildLogoSvg(opts, layout, lightTextColorEl.value, "logo-l");
   document.getElementById('render').innerHTML = icosa;
   document.getElementById('logo-stage-dark').innerHTML = logoDark;
   document.getElementById('logo-stage-light').innerHTML = logoLight;
@@ -117,8 +111,7 @@ async function exportedLogoSvg(variant) {
   const isDark = variant === "dark";
   const color = isDark ? darkTextColorEl.value : lightTextColorEl.value;
   const prefix = isDark ? "logo-d" : "logo-l";
-  const opts = isDark ? readOpts() : { ...readOpts(), ambient: LIGHT_VARIANT_AMBIENT };
-  return buildLogoSvg(opts, readLayout(), color, prefix, fontCss || undefined);
+  return buildLogoSvg(readOpts(), readLayout(), color, prefix, fontCss || undefined);
 }
 
 document.getElementById('copy-svg').addEventListener('click', () => navigator.clipboard.writeText(window.__lastSvg));

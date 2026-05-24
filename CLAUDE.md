@@ -20,6 +20,12 @@ remove the memory file in the same change.
 - Never use `git add -f`, `git add .`, or `git add -A`. Stage files by explicit path.
 - One kind of change per commit. Do not mix unrelated changes.
 
+## Scratch files
+
+- All ad-hoc scripts, generated previews, downloaded references, and other throwaway artifacts go in
+  the repo-local `.scratch/` (gitignored). Never use `~/.scratch/` or any path outside this repo for
+  scratch work — keep everything self-contained so the project is reproducible from a fresh clone.
+
 ## Code Style
 
 - Limit line lengths to 120 characters, including in markdown files.

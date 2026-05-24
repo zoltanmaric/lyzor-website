@@ -25,7 +25,6 @@ const layoutLabels = {
 };
 const darkTextColorEl = document.getElementById('darkTextColor');
 const lightTextColorEl = document.getElementById('lightTextColor');
-const embedFontEl = document.getElementById('embedFont');
 
 function readOpts() {
   return {
@@ -143,7 +142,7 @@ async function loadFontFaceCss() {
 }
 
 async function exportedLogoSvg(variant) {
-  const fontCss = embedFontEl.checked ? await loadFontFaceCss() : null;
+  const fontCss = await loadFontFaceCss();
   const isDark = variant === "dark";
   const color = isDark ? darkTextColorEl.value : lightTextColorEl.value;
   const prefix = isDark ? "logo-d" : "logo-l";

@@ -82,19 +82,31 @@ for (const el of Object.values(layoutInputs)) el.addEventListener('input', rende
 darkTextColorEl.addEventListener('input', render);
 lightTextColorEl.addEventListener('input', render);
 
-// Pull @font-face from logo/lyzortx-logo-white.svg so downloads can be
-// self-contained. Cached so the SVG fetch only happens once per session.
+// Fetch Manrope 800 from the @fontsource package on jsDelivr (a canonical,
+// CORS-friendly mirror of the upstream Google Fonts woff2). The font is then
+// base64-encoded into a data: URL so the downloaded SVG renders standalone
+// without any network dependency. Cached so we only hit the CDN once per
+// session.
+const FONT_URL = "https://cdn.jsdelivr.net/npm/@fontsource/manrope/files/manrope-latin-800-normal.woff2";
+
 let cachedFontFaceCss = null;
 async function loadFontFaceCss() {
   if (cachedFontFaceCss !== null) return cachedFontFaceCss;
   try {
-    const res = await fetch('../logo/lyzortx-logo-white.svg');
+    const res = await fetch(FONT_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    const match = text.match(/<style>([\s\S]*?)<\/style>/);
-    cachedFontFaceCss = match ? match[1].trim() : '';
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    // Chunked binary-string build avoids call-stack overflow that
+    // String.fromCharCode(...bytes) would hit on a large array.
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    const b64 = btoa(binary);
+    cachedFontFaceCss = `@font-face{font-family:"LyzorManrope";font-style:normal;font-weight:800;font-display:swap;src:url(data:font/woff2;base64,${b64}) format("woff2");}`;
   } catch (err) {
-    console.warn('Could not load font from ../logo/lyzortx-logo-white.svg:', err);
+    console.warn(`Could not fetch Manrope from ${FONT_URL}:`, err);
     cachedFontFaceCss = '';
   }
   return cachedFontFaceCss;

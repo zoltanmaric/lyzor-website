@@ -69,15 +69,14 @@
     <div class="row"><label for="textY">Y (baseline)</label><input id="textY" type="range" min="40" max="200" step="1" value="104" /><output id="textY-v"></output></div>
     <div class="row"><label for="textSize">Font size</label><input id="textSize" type="range" min="40" max="160" step="1" value="92" /><output id="textSize-v"></output></div>
     <div class="row"><label for="darkTextColor">Color · dark</label><input id="darkTextColor" type="color" value="#ffffff" /><output></output></div>
-    <div class="row"><label for="lightTextColor">Color · light</label><input id="lightTextColor" type="color" value="#1a1d2b" /><output></output></div>
+    <div class="row"><label for="lightTextColor">Color · light</label><input id="lightTextColor" type="color" value="#510981" /><output></output></div>
 
     <h2>Export</h2>
     <p class="logo-hint">
-      Two variants share these controls: dark canvas → white text, light canvas → black text.
-      The SVG references Manrope by name; bundled <code>lyzortx-logo-white*.svg</code> files
-      embed Manrope as base64 woff2 — check <em>Embed font</em> to do the same in the download
-      (fetches the woff2 from <code>../logo/lyzortx-logo-white.svg</code>; needs the server to
-      be rooted at the repo root).
+      The SVG references Manrope by name. Check <em>Embed font</em> to inline Manrope 800 as a
+      base64 woff2 instead — the font is fetched from
+      <code>cdn.jsdelivr.net/npm/@fontsource/manrope</code>, so the downloaded SVG renders
+      standalone without depending on the viewer's system fonts.
     </p>
     <div class="row"><label for="embedFont">Embed font</label><input id="embedFont" type="checkbox" /><output></output></div>
     <div class="actions">

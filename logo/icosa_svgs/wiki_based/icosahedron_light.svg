@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lyzor Tx icosahedron logo — light version (for light backgrounds). -->
+<!-- Faces recolored with a violet ramp anchored on brand-deep / brand-purple / brand-lavender. -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+	 width="390px" height="390px" viewBox="0 0 390 390" xml:space="preserve">
+<g>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#2a3578" points="5.244,216.744 120.744,372.744 143.994,287.994
+		5.244,216.744 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#384486" points="143.994,287.994 120.744,372.744 314.244,345.744
+		143.994,287.994 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#9698e8" points="143.994,287.994 319.494,156.744 314.244,345.744
+		143.994,287.994 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#5e6fc4" points="319.494,156.744 384.744,170.244 314.244,345.744
+		319.494,156.744 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#7584d6" points="272.244,17.244 319.494,156.744 384.744,170.244
+		272.244,17.244 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#bfbeff" points="119.244,72.744 143.994,287.994 319.494,156.744
+		119.244,72.744 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#a6a5fa" points="119.244,72.744 319.494,156.744 272.244,17.244
+		119.244,72.744 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#5060b8" points="84.744,47.994 119.244,72.744 272.244,17.244
+		84.744,47.994 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#4254a6" points="84.744,47.994 119.244,72.744 5.244,216.744
+		84.744,47.994 	"/>
+	<polyline fill-rule="evenodd" clip-rule="evenodd" fill="#8893e0" points="5.244,216.744 143.994,287.994 119.244,72.744
+		5.244,216.744 	"/>
+</g>
+</svg>

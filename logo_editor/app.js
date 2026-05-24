@@ -1,4 +1,4 @@
-import { buildSvg, buildLogoSvg } from "./icosa.js";
+import { buildSvg, buildLogoSvg } from "./logo.js";
 
 const inputs = {
   spin: document.getElementById('spin'), roll: document.getElementById('roll'), tilt: document.getElementById('tilt'),
@@ -15,12 +15,12 @@ const labels = {
 };
 const layoutInputs = {
   icoX: document.getElementById('icoX'), icoY: document.getElementById('icoY'), icoSize: document.getElementById('icoSize'),
-  canvasW: document.getElementById('canvasW'), canvasH: document.getElementById('canvasH'),
+  margin: document.getElementById('margin'),
   textX: document.getElementById('textX'), textY: document.getElementById('textY'), textSize: document.getElementById('textSize'),
 };
 const layoutLabels = {
   icoX: document.getElementById('icoX-v'), icoY: document.getElementById('icoY-v'), icoSize: document.getElementById('icoSize-v'),
-  canvasW: document.getElementById('canvasW-v'), canvasH: document.getElementById('canvasH-v'),
+  margin: document.getElementById('margin-v'),
   textX: document.getElementById('textX-v'), textY: document.getElementById('textY-v'), textSize: document.getElementById('textSize-v'),
 };
 const darkTextColorEl = document.getElementById('darkTextColor');
@@ -43,8 +43,6 @@ function readOpts() {
 
 function readLayout() {
   return {
-    canvasW: +layoutInputs.canvasW.value,
-    canvasH: +layoutInputs.canvasH.value,
     textX: +layoutInputs.textX.value,
     textY: +layoutInputs.textY.value,
     textSize: +layoutInputs.textSize.value,
@@ -54,14 +52,52 @@ function readLayout() {
   };
 }
 
+// Tighten the logo composition's outer viewBox to the actual content bbox
+// plus a uniform margin on all four sides. The text bbox comes from a brief
+// DOM render (getBBox); the icosahedron bounds come from the layout values
+// directly — a nested <svg>'s getBBox returns 0 in some browsers, which is
+// what made the icosa disappear from the first crop attempt.
+function cropLogoSvg(svgString, layout, margin) {
+  const { icoX, icoY, icoSize } = layout;
+  const tmp = document.createElement('div');
+  tmp.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden';
+  tmp.innerHTML = svgString;
+  document.body.appendChild(tmp);
+  let tb;
+  try {
+    tb = tmp.querySelector('text').getBBox();
+  } finally {
+    tmp.remove();
+  }
+  if (!tb || !isFinite(tb.width) || tb.width === 0) return svgString;
+
+  const xMin = Math.min(tb.x, icoX);
+  const yMin = Math.min(tb.y, icoY);
+  const xMax = Math.max(tb.x + tb.width, icoX + icoSize);
+  const yMax = Math.max(tb.y + tb.height, icoY + icoSize);
+  const x = xMin - margin;
+  const y = yMin - margin;
+  const w = (xMax - xMin) + margin * 2;
+  const h = (yMax - yMin) + margin * 2;
+  const round = (n) => Math.round(n * 100) / 100;
+  return svgString.replace(/<svg([^>]*?)>/, (_m, attrs) => {
+    const cleaned = attrs
+      .replace(/\swidth="[^"]*"/, '')
+      .replace(/\sheight="[^"]*"/, '')
+      .replace(/\sviewBox="[^"]*"/, '');
+    return `<svg${cleaned} width="${round(w)}" height="${round(h)}" viewBox="${round(x)} ${round(y)} ${round(w)} ${round(h)}">`;
+  });
+}
+
 function render() {
   const opts = readOpts();
   const layout = readLayout();
+  const margin = +layoutInputs.margin.value;
   for (const k of Object.keys(labels)) labels[k].textContent = (+inputs[k].value).toFixed(2);
   for (const k of Object.keys(layoutLabels)) layoutLabels[k].textContent = String(+layoutInputs[k].value);
   const icosa = buildSvg(opts, "t");
-  const logoDark = buildLogoSvg(opts, layout, darkTextColorEl.value, "logo-d");
-  const logoLight = buildLogoSvg(opts, layout, lightTextColorEl.value, "logo-l");
+  const logoDark = cropLogoSvg(buildLogoSvg(opts, layout, darkTextColorEl.value, "logo-d"), layout, margin);
+  const logoLight = cropLogoSvg(buildLogoSvg(opts, layout, lightTextColorEl.value, "logo-l"), layout, margin);
   document.getElementById('render').innerHTML = icosa;
   document.getElementById('logo-stage-dark').innerHTML = logoDark;
   document.getElementById('logo-stage-light').innerHTML = logoLight;
@@ -111,7 +147,9 @@ async function exportedLogoSvg(variant) {
   const isDark = variant === "dark";
   const color = isDark ? darkTextColorEl.value : lightTextColorEl.value;
   const prefix = isDark ? "logo-d" : "logo-l";
-  return buildLogoSvg(readOpts(), readLayout(), color, prefix, fontCss || undefined);
+  const layout = readLayout();
+  const raw = buildLogoSvg(readOpts(), layout, color, prefix, fontCss || undefined);
+  return cropLogoSvg(raw, layout, +layoutInputs.margin.value);
 }
 
 document.getElementById('copy-svg').addEventListener('click', () => navigator.clipboard.writeText(window.__lastSvg));
@@ -144,3 +182,6 @@ document.getElementById('save-logo-svg-light').addEventListener('click', () => d
 
 document.getElementById('ref').src = 'icosa-reference.png';
 render();
+// First render uses whatever font is loaded at script-start; refresh once
+// Manrope is ready so the text bbox measurement is accurate.
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);

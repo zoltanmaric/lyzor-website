@@ -147,30 +147,27 @@ export function buildSvg(opts, idPrefix = "t") {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW} ${VIEW}" width="${VIEW}" height="${VIEW}" fill="none"><defs><filter id="${glowId}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>${defs}</defs><polygon points="${hull}" fill="#cfd0f6" opacity="0.22" filter="url(#${glowId})"/>${polys}</svg>`;
 }
 
-// Compose the live icosa with the "Lyzor Tx" wordmark. Geometry mirrors the
-// original logo/lyzortx-logo-white-with-icosahedron.svg by default; layout
-// values override the canvas size, wordmark position, and icosahedron block.
-//
-// The outer viewBox is expanded to include the icosahedron so it is never
-// clipped when positioned outside the canvas rectangle — canvasW/H set a
-// minimum, not a hard cap. The rendered width/height grow in lockstep so the
-// document's intrinsic aspect ratio is preserved.
+// Compose the live icosa with the "Lyzor Tx" wordmark. The emitted viewBox
+// expands to cover both blocks — width based on a rough text-advance estimate
+// (~5 × textSize for "Lyzor Tx"), height bounded by the text baseline plus a
+// short descender. app.js's cropLogoSvg measures the real text bbox once
+// rendered and tightens the viewBox to fit with symmetric margins.
 //
 // `idPrefix` namespaces the icosa's defs so the dark and light copies can
 // coexist on the page. If `fontFaceCss` is supplied, it is injected as a
 // <style> block so the downloaded SVG renders without depending on the
 // system font.
 export function buildLogoSvg(opts, layout, textColor, idPrefix, fontFaceCss) {
-  const { canvasW, canvasH, textX, textY, textSize, icoX, icoY, icoSize } = layout;
+  const { textX, textY, textSize, icoX, icoY, icoSize } = layout;
   const icosa = buildSvg(opts, idPrefix);
   const nested = icosa.replace(
     /^<svg[^>]*>/,
     `<svg viewBox="0 0 220 220" x="${icoX}" y="${icoY}" width="${icoSize}" height="${icoSize}" preserveAspectRatio="xMidYMid meet">`
   );
-  const left = Math.min(0, icoX);
-  const top = Math.min(0, icoY);
-  const right = Math.max(canvasW, icoX + icoSize);
-  const bottom = Math.max(canvasH, icoY + icoSize);
+  const left = Math.min(0, textX, icoX);
+  const top = Math.min(0, textY - textSize, icoY);
+  const right = Math.max(textX + textSize * 5, icoX + icoSize);
+  const bottom = Math.max(textY + textSize * 0.3, icoY + icoSize);
   const vbW = right - left;
   const vbH = bottom - top;
   const fontFamily = fontFaceCss ? '"LyzorManrope", Manrope, Arial, Helvetica, sans-serif'

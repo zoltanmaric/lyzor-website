@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Icosahedron tuner</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font: 14px system-ui, sans-serif; background: #f6f7fb; color: #1a1d2b; }
+  .wrap { display: grid; grid-template-columns: 1fr 360px; gap: 24px; padding: 24px; min-height: 100vh; }
+  .stage { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-content: start; }
+  .panel { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .panel h2 { font-size: 13px; margin: 0 0 12px; color: #5b6076; text-transform: uppercase; letter-spacing: .08em; }
+  .preview { display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .preview svg, .preview img { max-width: 100%; max-height: 360px; }
+  .controls { display: flex; flex-direction: column; gap: 12px; }
+  .row { display: grid; grid-template-columns: 110px 1fr 56px; gap: 8px; align-items: center; }
+  .row label { font-weight: 500; }
+  .row input[type=range] { width: 100%; }
+  .row output { font-variant-numeric: tabular-nums; text-align: right; color: #5b6076; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { padding: 8px 12px; border: 0; border-radius: 8px; background: #6b7fd4; color: #fff; cursor: pointer; }
+  button.secondary { background: #e6e8f3; color: #1a1d2b; }
+  pre.values { background: #f1f2f9; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <div class="panel preview"><div id="render"></div></div>
+    <div class="panel preview" title="Reference PNG"><img id="ref" alt="reference icosahedron" /></div>
+  </div>
+  <div class="panel controls">
+    <h2>Orientation</h2>
+    <div class="row"><label for="spin">SPIN (Y)</label><input id="spin" type="range" min="-3.14" max="3.14" step="0.01" value="1.33" /><output id="spin-v"></output></div>
+    <div class="row"><label for="roll">ROLL (Z)</label><input id="roll" type="range" min="-1" max="1" step="0.01" value="-0.18" /><output id="roll-v"></output></div>
+    <div class="row"><label for="tilt">TILT (X)</label><input id="tilt" type="range" min="-1" max="1" step="0.01" value="0.09" /><output id="tilt-v"></output></div>
+    <div class="row"><label for="apex">Apex-up start</label><input id="apex" type="checkbox" checked /><output></output></div>
+
+    <h2>Key light</h2>
+    <div class="row"><label for="lx">Lx</label><input id="lx" type="range" min="-1" max="1" step="0.01" value="-0.6" /><output id="lx-v"></output></div>
+    <div class="row"><label for="ly">Ly</label><input id="ly" type="range" min="-1" max="1" step="0.01" value="0.31" /><output id="ly-v"></output></div>
+    <div class="row"><label for="lz">Lz</label><input id="lz" type="range" min="-1" max="1" step="0.01" value="0.65" /><output id="lz-v"></output></div>
+    <div class="row"><label for="amb">Ambient</label><input id="amb" type="range" min="0" max="1" step="0.01" value="0.38" /><output id="amb-v"></output></div>
+
+    <h2>Rim light (cyan halo)</h2>
+    <div class="row"><label for="rx">Rx</label><input id="rx" type="range" min="-1" max="1" step="0.01" value="0.38" /><output id="rx-v"></output></div>
+    <div class="row"><label for="ry">Ry</label><input id="ry" type="range" min="-1" max="1" step="0.01" value="0.05" /><output id="ry-v"></output></div>
+    <div class="row"><label for="rz">Rz</label><input id="rz" type="range" min="-1" max="1" step="0.01" value="-0.45" /><output id="rz-v"></output></div>
+    <div class="row"><label for="rims">Rim strength</label><input id="rims" type="range" min="0" max="1" step="0.01" value="0.25" /><output id="rims-v"></output></div>
+
+    <h2>Face shading</h2>
+    <div class="row"><label for="grad">Gradient</label><input id="grad" type="range" min="0" max="1" step="0.01" value="0" /><output id="grad-v"></output></div>
+
+    <h2>Output</h2>
+    <pre class="values" id="dump"></pre>
+    <div class="actions">
+      <button id="copy-svg">Copy SVG</button>
+      <button id="copy-vals" class="secondary">Copy values</button>
+      <button id="save-svg" class="secondary">Download SVG</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Procedural Gouraud-shaded vector icosahedron.
+//
+//  - 12 vertices of a regular icosahedron (golden-ratio coordinates).
+//  - 20 triangular faces.
+//  - Rotate to the chosen orientation, then orthographic project.
+//  - Compute per-vertex normals (average of adjacent face normals) and Lambert
+//    shade per vertex against one key light + one rim light.
+//  - Each visible face is filled with a linear gradient from its darkest
+//    vertex to its brightest, so colours match at shared edges and the surface
+//    reads as smoothly shaded.
+//  - Painter's algorithm sorts faces by centroid depth.
+
+const PHI = (1 + Math.sqrt(5)) / 2;
+
+const V = [
+  [0, 1, PHI], [0, -1, PHI], [0, 1, -PHI], [0, -1, -PHI],
+  [1, PHI, 0], [-1, PHI, 0], [1, -PHI, 0], [-1, -PHI, 0],
+  [PHI, 0, 1], [-PHI, 0, 1], [PHI, 0, -1], [-PHI, 0, -1],
+];
+
+const F = [
+  [0, 1, 8], [0, 8, 4], [0, 4, 5], [0, 5, 9], [0, 9, 1],
+  [1, 9, 7], [1, 7, 6], [1, 6, 8], [8, 6, 10], [8, 10, 4],
+  [4, 10, 2], [4, 2, 5], [5, 2, 11], [5, 11, 9], [9, 11, 7],
+  [7, 11, 3], [7, 3, 6], [6, 3, 10], [10, 3, 2], [11, 2, 3],
+];
+
+const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const dot = (a, b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const norm = (a) => { const n = Math.hypot(a[0], a[1], a[2]); return n ? [a[0]/n, a[1]/n, a[2]/n] : [0,0,0]; };
+const rotX = (p, a) => { const c=Math.cos(a), s=Math.sin(a); return [p[0], p[1]*c - p[2]*s, p[1]*s + p[2]*c]; };
+const rotY = (p, a) => { const c=Math.cos(a), s=Math.sin(a); return [p[0]*c + p[2]*s, p[1], -p[0]*s + p[2]*c]; };
+const rotZ = (p, a) => { const c=Math.cos(a), s=Math.sin(a); return [p[0]*c - p[1]*s, p[0]*s + p[1]*c, p[2]]; };
+
+// Brand palette ramp (sampled from the reference PNG): lavender base, cyan at
+// the bright rim, pale highlight at the peak.
+const STOPS = [
+  { t: 0.00, c: [148, 140, 210] },
+  { t: 0.35, c: [178, 174, 232] },
+  { t: 0.65, c: [206, 208, 246] },
+  { t: 0.85, c: [195, 232, 250] },
+  { t: 1.00, c: [240, 250, 255] },
+];
+
+function rampColor(t) {
+  t = Math.max(0, Math.min(1, t));
+  for (let i = 1; i < STOPS.length; i++) {
+    if (t <= STOPS[i].t) {
+      const a = STOPS[i-1], b = STOPS[i];
+      const u = (t - a.t) / (b.t - a.t || 1);
+      const mix = (k) => Math.round(a.c[k] + (b.c[k] - a.c[k]) * u);
+      return `rgb(${mix(0)},${mix(1)},${mix(2)})`;
+    }
+  }
+  return `rgb(${STOPS[STOPS.length-1].c.join(",")})`;
+}
+
+function convexHull(pts) {
+  const sorted = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const ccw = (o, a, b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const lower = [];
+  for (const p of sorted) {
+    while (lower.length >= 2 && ccw(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  const upper = [];
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const p = sorted[i];
+    while (upper.length >= 2 && ccw(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  return lower.slice(0, -1).concat(upper.slice(0, -1));
+}
+
+function buildSvg(opts) {
+  const { spin, roll, tilt, apexUp, light, rim, ambient, rimStrength, gradientStrength } = opts;
+  const RX0 = apexUp ? -Math.atan(PHI) : 0;
+  const verts = V.map(p => rotX(rotZ(rotY(rotX(p, RX0), spin), roll), tilt));
+
+  const faceNormals = F.map(([a, b, c]) => norm(cross(sub(verts[b], verts[a]), sub(verts[c], verts[a]))));
+  const vertNormals = verts.map(() => [0, 0, 0]);
+  F.forEach(([a, b, c], fi) => {
+    const n = faceNormals[fi];
+    [a, b, c].forEach(vi => { vertNormals[vi][0] += n[0]; vertNormals[vi][1] += n[1]; vertNormals[vi][2] += n[2]; });
+  });
+  for (let i = 0; i < vertNormals.length; i++) vertNormals[i] = norm(vertNormals[i]);
+
+  const L = norm(light);
+  const R = norm(rim);
+  const intensities = vertNormals.map(n => {
+    const d = Math.max(0, dot(n, L));
+    const r = Math.max(0, dot(n, R));
+    const rimT = Math.pow(r, 3) * rimStrength;
+    const spec = Math.pow(d, 8) * 0.18;
+    return Math.min(1, ambient + (1 - ambient) * d + spec + rimT);
+  });
+
+  const VIEW = 220, PAD = 16;
+  const xs = verts.map(p => p[0]); const ys = verts.map(p => p[1]);
+  const maxR = Math.max(...xs.map(Math.abs), ...ys.map(Math.abs));
+  const SCALE = (VIEW / 2 - PAD) / maxR;
+  const CX = VIEW / 2, CY = VIEW / 2;
+  const proj = verts.map(p => [CX + p[0] * SCALE, CY - p[1] * SCALE]);
+
+  const camDir = [0, 0, 1];
+  const facesOut = [];
+  F.forEach(([a, b, c], fi) => {
+    const fn = faceNormals[fi];
+    if (dot(fn, camDir) <= 0.001) return;
+    const tri = [a, b, c].map(vi => ({ vi, i: intensities[vi], p: proj[vi] }));
+    tri.sort((x, y) => x.i - y.i);
+    const cz = (verts[a][2] + verts[b][2] + verts[c][2]) / 3;
+    const avg = (tri[0].i + tri[1].i + tri[2].i) / 3;
+    facesOut.push({ abc: [a, b, c], lo: tri[0], hi: tri[2], avg, depth: cz });
+  });
+  facesOut.sort((x, y) => x.depth - y.depth);
+
+  // `gradientStrength` lerps each face's gradient stops between the face's
+  // average intensity (flat shading) and its true min/max vertex intensities
+  // (full Gouraud-style gradient). 0 → flat, 1 → full gradient.
+  const g = Math.max(0, Math.min(1, gradientStrength));
+  let defs = "";
+  let polys = "";
+  facesOut.forEach((f, idx) => {
+    const id = `g${idx}`;
+    const stopLo = f.avg + (f.lo.i - f.avg) * g;
+    const stopHi = f.avg + (f.hi.i - f.avg) * g;
+    if (g <= 0) {
+      const pts = f.abc.map(vi => `${proj[vi][0].toFixed(2)},${proj[vi][1].toFixed(2)}`).join(" ");
+      polys += `<polygon points="${pts}" fill="${rampColor(f.avg)}"/>`;
+      return;
+    }
+    defs += `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${f.lo.p[0].toFixed(2)}" y1="${f.lo.p[1].toFixed(2)}" x2="${f.hi.p[0].toFixed(2)}" y2="${f.hi.p[1].toFixed(2)}">`;
+    defs += `<stop offset="0%" stop-color="${rampColor(stopLo)}"/><stop offset="100%" stop-color="${rampColor(stopHi)}"/></linearGradient>`;
+    const pts = f.abc.map(vi => `${proj[vi][0].toFixed(2)},${proj[vi][1].toFixed(2)}`).join(" ");
+    polys += `<polygon points="${pts}" fill="url(#${id})"/>`;
+  });
+
+  const visibleVerts = new Set();
+  facesOut.forEach(f => f.abc.forEach(vi => visibleVerts.add(vi)));
+  const hullPts = Array.from(visibleVerts).map(vi => proj[vi]);
+  const hull = convexHull(hullPts).map(p => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(" ");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW} ${VIEW}" width="${VIEW}" height="${VIEW}" fill="none"><defs><filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>${defs}</defs><polygon points="${hull}" fill="#cfd0f6" opacity="0.22" filter="url(#glow)"/>${polys}</svg>`;
+}
+
+const inputs = {
+  spin: document.getElementById('spin'), roll: document.getElementById('roll'), tilt: document.getElementById('tilt'),
+  apex: document.getElementById('apex'),
+  lx: document.getElementById('lx'), ly: document.getElementById('ly'), lz: document.getElementById('lz'), amb: document.getElementById('amb'),
+  rx: document.getElementById('rx'), ry: document.getElementById('ry'), rz: document.getElementById('rz'), rims: document.getElementById('rims'),
+  grad: document.getElementById('grad'),
+};
+const labels = {
+  spin: document.getElementById('spin-v'), roll: document.getElementById('roll-v'), tilt: document.getElementById('tilt-v'),
+  lx: document.getElementById('lx-v'), ly: document.getElementById('ly-v'), lz: document.getElementById('lz-v'), amb: document.getElementById('amb-v'),
+  rx: document.getElementById('rx-v'), ry: document.getElementById('ry-v'), rz: document.getElementById('rz-v'), rims: document.getElementById('rims-v'),
+  grad: document.getElementById('grad-v'),
+};
+
+function render() {
+  const opts = {
+    spin: +inputs.spin.value,
+    roll: +inputs.roll.value,
+    tilt: +inputs.tilt.value,
+    apexUp: inputs.apex.checked,
+    light: [+inputs.lx.value, +inputs.ly.value, +inputs.lz.value],
+    rim: [+inputs.rx.value, +inputs.ry.value, +inputs.rz.value],
+    ambient: +inputs.amb.value,
+    rimStrength: +inputs.rims.value,
+    gradientStrength: +inputs.grad.value,
+  };
+  for (const k of Object.keys(labels)) labels[k].textContent = (+inputs[k].value).toFixed(2);
+  const svg = buildSvg(opts);
+  document.getElementById('render').innerHTML = svg;
+  document.getElementById('dump').textContent = JSON.stringify(opts, null, 2);
+  window.__lastSvg = svg;
+  window.__lastOpts = opts;
+}
+
+for (const el of Object.values(inputs)) el.addEventListener('input', render);
+document.getElementById('copy-svg').addEventListener('click', () => navigator.clipboard.writeText(window.__lastSvg));
+document.getElementById('copy-vals').addEventListener('click', () => navigator.clipboard.writeText(JSON.stringify(window.__lastOpts, null, 2)));
+document.getElementById('save-svg').addEventListener('click', () => {
+  const blob = new Blob([window.__lastSvg], { type: 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'icosa.svg'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+document.getElementById('ref').src = 'icosa-reference.png';
+render();
+</script>
+</body>
+</html>

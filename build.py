@@ -14,10 +14,12 @@ import requests
 from bs4 import BeautifulSoup, Comment
 
 SITE_URL = "https://strong-motivation-722518.framer.app"
+# /journal is intentionally excluded: in Framer it still holds the default blog
+# template filler (generic "business intelligence / AI analytics" posts), not real
+# Lyzor content. Re-add it here once the page has genuine content in Framer.
 PAGES = {
     "index.html": "/",
     "contact.html": "/contact",
-    "journal.html": "/journal",
 }
 
 ROOT = Path(__file__).parent

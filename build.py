@@ -37,6 +37,16 @@ STYLE_MAP = {
     "data-framer-font-css": "fonts.css",
 }
 
+# The hero heading renders in Manrope at this weight. Its webfont is referenced deep inside
+# fonts.css, so the browser discovers it late: the heading first paints in the metric-adjusted
+# fallback (Arial via "Manrope Placeholder"), which is wide enough to wrap the heading onto a
+# second line, then reflows to one line once Manrope loads. Preloading exactly this file in the
+# <head> makes the browser fetch it eagerly so it's ready at first paint, removing the reflow.
+# Update the weight if the hero heading text style changes in Framer.
+HERO_FONT_FAMILY = "Manrope"
+HERO_FONT_WEIGHT = 500
+FONT_ORIGIN = "https://framerusercontent.com"
+
 
 def download_pages():
     """Download published pages into raw_site_export/."""
@@ -129,6 +139,40 @@ def extract_styles(soup, css_written):
     return soup
 
 
+def find_font_url(font_css, family, weight):
+    """Return the woff2 URL for a given font-family + weight from the font CSS text."""
+    for face in re.findall(r'@font-face\s*\{[^}]*\}', font_css, re.DOTALL):
+        if f'font-family: "{family}"' not in face:
+            continue
+        if not re.search(rf'font-weight:\s*{weight}\b', face):
+            continue
+        url = re.search(r'url\("([^"]+)"\)', face)
+        if url:
+            return url.group(1)
+    return None
+
+
+def preload_hero_font(soup, font_css):
+    """Inject a preconnect + font preload for the hero heading weight, so the real font is
+    ready at first paint and the heading doesn't reflow from two lines to one."""
+    url = find_font_url(font_css, HERO_FONT_FAMILY, HERO_FONT_WEIGHT)
+    head = soup.find("head")
+    if not url or head is None:
+        return soup
+
+    anchor = soup.find("link", attrs={"data-framer-font-css": True}) or head.find("link")
+
+    if not soup.find("link", attrs={"rel": "preconnect", "href": FONT_ORIGIN}):
+        preconnect = soup.new_tag("link", attrs={"rel": "preconnect", "href": FONT_ORIGIN, "crossorigin": ""})
+        anchor.insert_before(preconnect) if anchor else head.append(preconnect)
+
+    preload = soup.new_tag("link", attrs={
+        "rel": "preload", "as": "font", "type": "font/woff2", "href": url, "crossorigin": ""
+    })
+    anchor.insert_before(preload) if anchor else head.append(preload)
+    return soup
+
+
 def build():
     print("Step 1: Downloading pages...")
     pages = download_pages()
@@ -142,7 +186,12 @@ def build():
         print(f"  Processing {filename}")
         soup = BeautifulSoup(html, "html.parser")
         soup = clean_html(soup)
+
+        font_style = soup.find("style", attrs={"data-framer-font-css": True})
+        font_css = (font_style.string or "") if font_style else ""
+
         soup = extract_styles(soup, css_written)
+        soup = preload_hero_font(soup, font_css)
         css_written = True
 
         out_path = SITE_DIR / filename

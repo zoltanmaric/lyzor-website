@@ -25,10 +25,14 @@ RAW_DIR = ROOT / "raw_site_export"
 SITE_DIR = ROOT / "site"
 CSS_DIR = SITE_DIR / "css"
 
+# Style blocks Framer inlines in <head>. Only the font CSS is safe to extract into an
+# external file. The SSR-critical CSS (data-framer-css-ssr-minified) and the breakpoint
+# CSS (data-framer-breakpoint-css, whose `.hidden-*` rules hide the inactive responsive
+# variants) MUST stay inline: externalizing them lets the browser paint before the CSS
+# applies, causing a flash of unstyled content where all three breakpoint variants render
+# at once. Framer inlines them for exactly this reason — keep them inline.
 STYLE_MAP = {
     "data-framer-font-css": "fonts.css",
-    "data-framer-breakpoint-css": "breakpoints.css",
-    "data-framer-css-ssr-minified": "styles.css",
 }
 
 
